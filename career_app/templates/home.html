@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="hero">
+    <div class="hero-bg"></div>
+    <div class="container position-relative">
+        <div class="hero-content text-center text-white py-5">
+            <h1 class="display-4 fw-bold mb-3">Find Your Path</h1>
+            <p class="lead mb-4 opacity-90">AI-powered career guidance, resume analysis, and personalized job-fit suggestions.</p>
+            <a href="{% url 'explore_careers' %}" class="btn btn-outline-light btn-lg px-4 rounded-pill me-2 mb-2">Explore Careers</a>
+            <div class="d-flex flex-wrap justify-content-center gap-3">
+                <a href="{% url 'signup' %}" class="btn btn-light btn-lg px-4 rounded-pill shadow">
+                    <i class="fas fa-rocket me-2"></i> Get Started
+                </a>
+                <a href="{% url 'login' %}" class="btn btn-outline-light btn-lg px-4 rounded-pill">Login</a>
+            </div>
+        </div>
+    </div>
+</section>
+<section class="features py-5">
+    <div class="container">
+        <h2 class="text-center mb-5 fw-bold">What We Offer</h2>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="feature-card card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon mb-3"><i class="fas fa-lightbulb"></i></div>
+                        <h5 class="card-title">Career Guidance</h5>
+                        <p class="card-text text-muted">Get personalized career suggestions based on your skills and interests.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon mb-3"><i class="fas fa-file-alt"></i></div>
+                        <h5 class="card-title">Resume Analyzer</h5>
+                        <p class="card-text text-muted">Upload your resume for instant analysis, keyword extraction, and improvement tips.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon mb-3"><i class="fas fa-history"></i></div>
+                        <h5 class="card-title">History & Insights</h5>
+                        <p class="card-text text-muted">Track your past analyses and career suggestions in one place.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

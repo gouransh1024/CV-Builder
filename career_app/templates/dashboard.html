@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<div class="container py-4">
+    <h2 class="mb-4"><i class="fas fa-th-large me-2"></i>Dashboard</h2>
+    <ul class="nav nav-tabs nav-fill mb-4" id="dashboardTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link {% if tab == 'guidance' or not tab %}active{% endif %}" id="guidance-tab" data-bs-toggle="tab" data-bs-target="#guidance" type="button" role="tab">
+                <i class="fas fa-lightbulb me-2"></i>Career Guidance
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link {% if tab == 'analyzer' %}active{% endif %}" id="analyzer-tab" data-bs-toggle="tab" data-bs-target="#analyzer" type="button" role="tab">
+                <i class="fas fa-file-alt me-2"></i>Resume Analyzer
+            </button>
+        </li>
+    </ul>
+    <div class="tab-content" id="dashboardTabContent">
+        <div class="tab-pane fade {% if tab == 'guidance' or not tab %}show active{% endif %}" id="guidance" role="tabpanel">
+            <div class="row">
+                <div class="col-lg-5 mb-4">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body p-4">
+                            <h5 class="card-title mb-3"><i class="fas fa-edit me-2"></i>Get Career Suggestions</h5>
+                            <p class="text-muted small mb-3">Enter your skills, interests, or keywords (comma or space separated).</p>
+                            <form method="post" action="{% url 'guidance' %}">
+                                {% csrf_token %}
+                                {{ guidance_form.skills }}
+                                <button type="submit" class="btn btn-primary mt-3 w-100 rounded-pill">
+                                    <i class="fas fa-search me-2"></i>Get Suggestions
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-7">
+                    {% if suggestions %}
+                        <div class="card border-0 shadow-sm mb-4">
+                            <div class="card-body p-4">
+                                <h5 class="card-title text-success"><i class="fas fa-check-circle me-2"></i>Career suggestions for you</h5>
+                                {% if skills_submitted %}
+                                    <p class="text-muted small mb-3">Based on: {{ skills_submitted }}</p>
+                                {% endif %}
+                                <ul class="list-group list-group-flush">
+                                    {% for career in suggestions %}
+                                        <li class="list-group-item d-flex align-items-center border-0 px-0">
+                                            <i class="fas fa-briefcase text-primary me-2"></i>{{ career }}
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    {% endif %}
+                    {% if recent_guidance %}
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body p-4">
+                                <h6 class="card-title"><i class="fas fa-history me-2"></i>Recent guidance</h6>
+                                <ul class="list-group list-group-flush">
+                                    {% for g in recent_guidance %}
+                                        <li class="list-group-item border-0 px-0 small">
+                                            <span class="text-muted">{{ g.created_at|date:"M d, Y" }}</span> — {{ g.skills|truncatewords:10 }}
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                                <a href="{% url 'history' %}" class="btn btn-sm btn-outline-primary mt-2">View full history</a>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="tab-pane fade {% if tab == 'analyzer' %}show active{% endif %}" id="analyzer" role="tabpanel">
+            <div class="row">
+                <div class="col-lg-5 mb-4">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body p-4">
+                            <h5 class="card-title mb-3"><i class="fas fa-upload me-2"></i>Upload Resume</h5>
+                            <p class="text-muted small mb-3">PDF, TXT, DOCX, or image (JPG, PNG, GIF, WEBP). We'll extract keywords and suggest improvements.</p>
+                            <form method="post" action="{% url 'analyzer' %}" enctype="multipart/form-data">
+                                {% csrf_token %}
+                                <label class="form-label" for="id_file">Resume file</label>
+                                {{ analyzer_form.file }}
+                                <button type="submit" class="btn btn-primary mt-3 w-100 rounded-pill">
+                                    <i class="fas fa-chart-line me-2"></i>Analyze
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-7">
+                    {% if analysis %}
+                        <div class="card border-0 shadow-sm mb-4">
+                            <div class="card-body p-4">
+                                <h5 class="card-title"><i class="fas fa-chart-pie me-2"></i>Analysis results</h5>
+                                <div class="mb-3">
+                                    <span class="badge bg-primary fs-6">Score: {{ analysis.score }}%</span>
+                                </div>
+                                <p class="mb-3">{{ analysis.suggestions }}</p>
+                                {% if analysis.found_skills %}
+                                    <p class="small mb-1 fw-bold">Detected skills:</p>
+                                    <div class="d-flex flex-wrap gap-1 mb-3">
+                                        {% for s in analysis.found_skills %}
+                                            <span class="badge bg-success">{{ s }}</span>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                {% if analysis.keywords %}
+                                    <p class="small mb-1 fw-bold">Top keywords:</p>
+                                    <div class="d-flex flex-wrap gap-1">
+                                        {% for k in analysis.keywords %}
+                                            <span class="badge bg-light text-dark border">{{ k }}</span>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endif %}
+                    {% if recent_resumes %}
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body p-4">
+                                <h6 class="card-title"><i class="fas fa-history me-2"></i>Recent uploads</h6>
+                                <ul class="list-group list-group-flush">
+                                    {% for r in recent_resumes %}
+                                        <li class="list-group-item border-0 px-0 small">
+                                            {{ r.file.name }} — {{ r.uploaded_at|date:"M d, Y H:i" }}
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                                <a href="{% url 'history' %}" class="btn btn-sm btn-outline-primary mt-2">View full history</a>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+(function() {
+    var tab = "{{ tab|default:'' }}";
+    if (tab === 'analyzer') {
+        var el = document.getElementById('analyzer-tab');
+        if (el) { var b = new bootstrap.Tab(el); b.show(); }
+    }
+})();
+</script>
+{% endblock %}
