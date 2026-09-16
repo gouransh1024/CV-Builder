@@ -13,24 +13,100 @@
     <meta name="format-detection" content="telephone=no">
     <link rel="manifest" href="{% static 'manifest.json' %}">
     <link rel="apple-touch-icon" href="{% static 'icons/icon-192.svg' %}">
-    <title>{% block title %}Smart Career Guidance{% endblock %}</title>
+    <title>{% block title %}Smart Career Guidance | AI-Powered Platform{% endblock %}</title>
+
+    <!-- Immediate Browser Default Theme Auto-Detection (Zero FOUC) -->
+    <script>
+      (function() {
+        try {
+          var manual = localStorage.getItem('scg-theme-manual');
+          var saved = localStorage.getItem('scg-theme');
+          var systemDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+          var theme = (manual && saved) ? saved : (systemDark ? 'dark' : 'light');
+          document.documentElement.setAttribute('data-theme', theme);
+          document.documentElement.setAttribute('data-bs-theme', theme);
+        } catch (e) {}
+      })();
+    </script>
+
+    <!-- Google Fonts: Inter, Outfit & Merriweather -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap 5 & Font Awesome -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark scg-nav">
-        <div class="container">
-            <a class="navbar-brand d-flex align-items-center gap-2" href="{% url 'home' %}">
-                <i class="fas fa-compass"></i>
-                <span>Smart Career</span>
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+    <div class="scg-layout {% if user.is_authenticated %}has-sidebar{% endif %}" id="scg-app-layout">
+        {% if user.is_authenticated %}
+        <div id="scg-sidebar-backdrop" class="scg-sidebar-backdrop"></div>
+        <aside class="scg-sidebar" id="scg-sidebar" aria-label="Sidebar navigation">
+            <div class="scg-sidebar-inner">
+                <div class="scg-sidebar-brand d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fas fa-compass text-warning"></i>
+                        <span>Smart Career</span>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-link text-white d-lg-none p-0" id="scg-sidebar-close" aria-label="Close sidebar">
+                        <i class="fas fa-times fs-5"></i>
+                    </button>
+                </div>
+                <nav class="scg-sidebar-nav">
+                    <a class="scg-sidebar-link" href="{% url 'dashboard' %}">
+                        <i class="fas fa-th-large me-2"></i>Dashboard
+                    </a>
+                    <a class="scg-sidebar-link" href="{% url 'resume_builder' %}">
+                        <i class="fas fa-wand-magic-sparkles me-2 text-warning"></i>CV Builder
+                        <span class="badge bg-warning text-dark ms-auto" style="font-size: 10px;">PRO</span>
+                    </a>
+                    <a class="scg-sidebar-link" href="{% url 'dashboard' %}?tab=analyzer">
+                        <i class="fas fa-file-alt me-2"></i>ATS Scanner
+                    </a>
+                    <a class="scg-sidebar-link" href="{% url 'explore_careers' %}">
+                        <i class="fas fa-rocket me-2"></i>Careers
+                    </a>
+                    <a class="scg-sidebar-link" href="{% url 'history' %}">
+                        <i class="fas fa-clock-rotate-left me-2"></i>History
+                    </a>
+                </nav>
+                <div class="scg-sidebar-footer small text-muted">
+                    <div class="mb-1">Signed in as</div>
+                    <div class="scg-sidebar-user fw-semibold text-white text-truncate">{% if user.username %}{{ user.username }}{% else %}User{% endif %}</div>
+                </div>
+            </div>
+        </aside>
+        {% endif %}
+        <div class="scg-layout-main" id="scg-main-wrapper">
+    <nav class="navbar navbar-expand-lg navbar-dark scg-nav sticky-top">
+        <div class="container-fluid px-3 px-md-4">
+            <div class="d-flex align-items-center">
+                {% if user.is_authenticated %}
+                <button class="btn btn-link text-white d-lg-none me-2 p-1 fs-5" type="button" id="scg-mobile-sidebar-toggle" aria-label="Open sidebar menu">
+                    <i class="fas fa-bars"></i>
+                </button>
+                {% endif %}
+                <a class="navbar-brand d-flex align-items-center gap-2" href="{% url 'home' %}">
+                    <i class="fas fa-compass text-warning"></i>
+                    <span class="fw-bold tracking-tight">Smart Career</span>
+                </a>
+            </div>
+            <button class="navbar-toggler border-0 p-1" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navMenu">
-                <ul class="navbar-nav ms-auto align-items-lg-center gap-2">
-                    <li class="nav-item"><a class="nav-link" href="{% url 'explore_careers' %}"><i class="fas fa-search me-1"></i>Explore</a></li>
+                <ul class="navbar-nav ms-auto align-items-lg-center gap-1 gap-lg-2">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% if user.is_authenticated %}{% url 'explore_careers' %}{% else %}{% url 'login' %}?next={% url 'explore_careers' %}{% endif %}"><i class="fas fa-search me-1"></i>Explore</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% if user.is_authenticated %}{% url 'resume_builder' %}{% else %}{% url 'login' %}?next={% url 'resume_builder' %}{% endif %}">
+                            <i class="fas fa-wand-magic-sparkles me-1 text-warning"></i>CV Builder
+                        </a>
+                    </li>
                     {% if user.is_authenticated %}
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'dashboard' %}">
@@ -40,22 +116,47 @@
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'history' %}"><i class="fas fa-history me-1"></i> History</a>
                         </li>
+                        <li class="nav-item dropdown">
+                            <button class="nav-link dropdown-toggle position-relative" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-bell me-1"></i> Alerts
+                                <span class="badge bg-danger position-absolute top-0 start-100 translate-middle" id="scg-unread-count">0</span>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow-sm" id="scg-notifications-menu" style="min-width: 340px;">
+                                <li>
+                                    <div class="small text-muted px-3 py-2">Loading notifications...</div>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <button class="dropdown-item" type="button" id="scg-mark-notifications-read">Mark all as read</button>
+                                </li>
+                            </ul>
+                        </li>
                         {% if user.is_staff %}
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'admin:index' %}"><i class="fas fa-cog me-1"></i> Admin</a>
                         </li>
                         {% endif %}
                         <li class="nav-item">
-                            <a class="nav-link btn btn-outline-light btn-sm px-3" href="{% url 'logout' %}">
+                            <button class="nav-link btn btn-link text-white-50 border-0 p-2" id="global-theme-toggle" type="button" title="Toggle Light/Dark Theme" aria-label="Toggle theme">
+                                <i class="fas fa-moon" id="global-theme-icon"></i>
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link btn btn-outline-light btn-sm px-3 ms-lg-2" href="{% url 'logout' %}">
                                 <i class="fas fa-sign-out-alt me-1"></i> Logout
                             </a>
                         </li>
                     {% else %}
                         <li class="nav-item">
+                            <button class="nav-link btn btn-link text-white-50 border-0 p-2" id="global-theme-toggle" type="button" title="Toggle Light/Dark Theme" aria-label="Toggle theme">
+                                <i class="fas fa-moon" id="global-theme-icon"></i>
+                            </button>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link" href="{% url 'login' %}">Login</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link btn btn-light btn-sm px-3 text-dark" href="{% url 'signup' %}">Sign Up</a>
+                            <a class="nav-link btn btn-warning btn-sm px-3 text-dark fw-bold rounded-pill ms-lg-1" href="{% url 'signup' %}">Sign Up Free</a>
                         </li>
                     {% endif %}
                 </ul>
@@ -77,11 +178,12 @@
     </main>
     <footer class="scg-footer">
         <div class="container text-center py-4">
-            <p class="mb-0">&copy; Smart Career Guidance. AI-powered career advice and resume analysis.</p>
+            <p class="mb-0">&copy; Smart Career Guidance. AI-powered career intelligence, resume builder, and ATS analysis.</p>
             <p class="mb-0 mt-2 small opacity-75"><a href="{% url 'admin:index' %}" class="text-white-50">Admin</a></p>
         </div>
     </footer>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    {% block before_app_scripts %}{% endblock %}
     <script src="{% static 'js/scripts.js' %}"></script>
     <script>
     // Register Service Worker for PWA
@@ -91,6 +193,70 @@
       });
     }
     </script>
+    <script>
+    (function () {
+      var unreadEl = document.getElementById('scg-unread-count');
+      var menuEl = document.getElementById('scg-notifications-menu');
+      if (!unreadEl || !menuEl) return;
+
+      function escapeHtml(s) {
+        return String(s || '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      }
+
+      function getCsrfToken() {
+        var match = document.cookie.match(/csrftoken=([^;]+)/);
+        return match ? match[1] : '';
+      }
+
+      function loadNotifications() {
+        fetch('/api/notifications/', { headers: { 'Accept': 'application/json' } })
+          .then(function (r) { return r.json(); })
+          .then(function (data) {
+            var unread = Number(data.unread_count || 0);
+            unreadEl.textContent = String(unread);
+
+            var notifs = data.notifications || [];
+            if (!notifs.length) {
+              menuEl.innerHTML = '<li><div class="small text-muted px-3 py-2">No notifications right now.</div></li>' +
+                '<li><hr class="dropdown-divider"></li>' +
+                '<li><button class="dropdown-item" type="button" id="scg-mark-notifications-read">Mark all as read</button></li>';
+              return;
+            }
+
+            menuEl.innerHTML =
+              notifs.slice(0, 10).map(function (n) {
+                var cls = n.is_read ? 'text-muted' : 'fw-semibold text-body';
+                return '<li><div class="small px-3 py-2 ' + cls + '"><i class="fas fa-bolt me-2 text-warning"></i>' + escapeHtml(n.message) + '</div></li>';
+              }).join('') +
+              '<li><hr class="dropdown-divider"></li>' +
+              '<li><button class="dropdown-item" type="button" id="scg-mark-notifications-read">Mark all as read</button></li>';
+
+            var newMarkBtn = document.getElementById('scg-mark-notifications-read');
+            if (newMarkBtn) {
+              newMarkBtn.addEventListener('click', function () {
+                fetch('/api/notifications/', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
+                  body: JSON.stringify({}),
+                })
+                  .then(function () { loadNotifications(); })
+                  .catch(function () {});
+              });
+            }
+          })
+          .catch(function () {});
+      }
+
+      loadNotifications();
+    })();
+    </script>
     {% block extra_js %}{% endblock %}
+        </div>
+    </div>
 </body>
 </html>

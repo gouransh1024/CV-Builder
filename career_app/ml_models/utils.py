@@ -1,5 +1,12 @@
+import re
+from pathlib import Path
+from typing import Any, List, Optional
 import joblib
-from django.conf import settings
+
+try:
+    from django.conf import settings
+except ImportError:
+    settings = None
 
 # Extended skill-to-career mapping for rich suggestions
 SKILL_CAREER_MAP = {
@@ -41,33 +48,107 @@ SKILL_CAREER_MAP = {
     'node': ['Backend Developer', 'Full Stack Developer', 'Node.js Developer', 'API Developer'],
 }
 
+STOPWORDS = {
+    'i', 'me', 'my', 'myself', 'we', 'our', 'ours', 'ourselves', 'you', 'your', 'yours',
+    'he', 'him', 'his', 'she', 'her', 'hers', 'it', 'its', 'they', 'them', 'their',
+    'what', 'which', 'who', 'whom', 'this', 'that', 'these', 'those', 'am', 'is', 'are',
+    'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'having', 'do', 'does',
+    'did', 'doing', 'a', 'an', 'the', 'and', 'but', 'if', 'or', 'because', 'as', 'until',
+    'while', 'of', 'at', 'by', 'for', 'with', 'about', 'against', 'between', 'into',
+    'through', 'during', 'before', 'after', 'above', 'below', 'to', 'from', 'up', 'down',
+    'in', 'out', 'on', 'off', 'over', 'under', 'again', 'further', 'then', 'once', 'here',
+    'there', 'when', 'where', 'why', 'how', 'all', 'any', 'both', 'each', 'few', 'more',
+    'most', 'other', 'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so',
+    'than', 'too', 'very', 's', 't', 'can', 'will', 'just', 'don', 'should', 'now',
+    'want', 'like', 'interested', 'good', 'skills', 'experience'
+}
 
-def get_career_suggestions(skills_text):
-    """Return a list of career suggestions based on skills/interests text."""
-    model_path = getattr(settings, 'ML_MODEL_PATH', None)
-    if model_path and getattr(model_path, 'exists', lambda: False)():
+_CACHED_MODEL: Any = None
+
+
+def _get_model() -> Any:
+    global _CACHED_MODEL
+    if _CACHED_MODEL is not None:
+        return _CACHED_MODEL
+
+    model_path = None
+    try:
+        if settings is not None and settings.configured:
+            model_path = getattr(settings, 'ML_MODEL_PATH', None)
+    except Exception:
+        model_path = None
+    if not model_path:
+        base_dir = Path(__file__).resolve().parent
+        model_path = base_dir / 'career_guidance_model.pkl'
+
+    if model_path and Path(model_path).exists() and Path(model_path).stat().st_size > 0:
         try:
-            model = joblib.load(model_path)
-            pred = model.predict([skills_text.lower()])
-            return list(pred) if hasattr(pred, '__iter__') and not isinstance(pred, str) else [str(pred)]
+            _CACHED_MODEL = joblib.load(model_path)
+            return _CACHED_MODEL
+        except Exception:
+            return None
+    return None
+
+
+def get_career_suggestions(skills_text: Optional[str] = None) -> List[str]:
+    """
+    Return a list of career suggestions based on skills/interests text.
+    Combines authentic ML model classification with safe keyword heuristics.
+    """
+    clean_text = (skills_text or '').strip()
+    if not clean_text:
+        return ['General Professional', 'Career Coach recommended']
+
+    seen = set()
+    results = []
+
+    # 1. Authentic ML model predictions
+    model = _get_model()
+    if model is not None:
+        try:
+            if hasattr(model, 'predict_proba'):
+                probas = model.predict_proba([clean_text.lower()])[0]
+                top_indices = probas.argsort()[-5:][::-1]
+                for idx in top_indices:
+                    career = str(model.classes_[idx])
+                    if probas[idx] > 0.03 and career not in seen:
+                        seen.add(career)
+                        results.append(career)
+            else:
+                pred = model.predict([clean_text.lower()])
+                for p in (pred if hasattr(pred, '__iter__') and not isinstance(pred, str) else [str(pred)]):
+                    p_str = str(p)
+                    if p_str not in seen:
+                        seen.add(p_str)
+                        results.append(p_str)
         except Exception:
             pass
-    # Fallback: keyword-based suggestions
-    skills_lower = skills_text.lower().strip()
-    if not skills_lower:
-        return ['General Professional', 'Career Coach recommended']
-    words = set(skills_lower.replace(',', ' ').split())
-    seen = set()
-    result = []
-    for word in words:
-        if len(word) < 2:
-            continue
+
+    # 2. Heuristic skill matching with tokenization & stopword elimination
+    tokens = [
+        t for t in re.findall(r'[a-zA-Z0-9+#.]+', clean_text.lower())
+        if len(t) > 1 and t not in STOPWORDS
+    ]
+
+    for token in tokens:
         for skill_key, careers in SKILL_CAREER_MAP.items():
-            if skill_key in word or word in skill_key:
+            # Exact token match or token contains full skill key (e.g. "python3" contains "python")
+            if token == skill_key or (len(token) > len(skill_key) and skill_key in token):
                 for c in careers:
                     if c not in seen:
                         seen.add(c)
-                        result.append(c)
-    if not result:
-        result = ['General Professional', 'Consider exploring roles that match your interests']
-    return result[:12]
+                        results.append(c)
+
+    # 3. Multi-word phrase check (e.g. "machine learning", "data science")
+    clean_lower = f" {clean_text.lower()} "
+    for skill_key, careers in SKILL_CAREER_MAP.items():
+        if f" {skill_key} " in clean_lower:
+            for c in careers:
+                if c not in seen:
+                    seen.add(c)
+                    results.append(c)
+
+    if not results:
+        results = ['General Professional', 'Consider exploring roles that match your interests']
+
+    return results[:10]

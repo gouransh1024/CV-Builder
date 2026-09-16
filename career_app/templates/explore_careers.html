@@ -1,26 +1,154 @@
 {% extends 'base.html' %}
+{% load static %}
+
 {% block content %}
-<div class="container py-5">
-    <h2 class="mb-4"><i class="fas fa-search me-2"></i>Explore Careers by Skill</h2>
-    <p class="text-muted mb-4">Browse suggested career paths based on skills. Use these keywords in Career Guidance for personalized suggestions.</p>
-    <div class="row g-4">
-        {% for item in skills_careers %}
-            <div class="col-md-6 col-lg-4">
-                <div class="card border-0 shadow-sm h-100">
-                    <div class="card-body p-4">
-                        <h5 class="card-title text-capitalize text-primary">{{ item.skill }}</h5>
-                        <ul class="list-unstyled mb-0 small">
-                            {% for career in item.careers %}
-                                <li class="mb-1"><i class="fas fa-arrow-right me-2 text-muted"></i>{{ career }}</li>
-                            {% endfor %}
-                        </ul>
+<div class="container py-5 careers-page">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+            <h2 class="mb-1"><i class="fas fa-rocket me-2 text-primary"></i>Explore Careers</h2>
+            <p class="text-muted mb-0">Search roles, inspect skill gaps, and apply instantly.</p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <button class="btn btn-outline-secondary rounded-pill" id="refresh-careers-btn" type="button">
+                <i class="fas fa-arrows-rotate me-2"></i>Refresh
+            </button>
+        </div>
+    </div>
+
+    {% if not user.is_authenticated %}
+    <div class="alert alert-info border-0 shadow-sm rounded-3 p-3 mb-4 d-flex align-items-center gap-3">
+        <i class="fas fa-circle-info fs-3 text-info"></i>
+        <div class="flex-grow-1">
+            <strong>Public Career Directory:</strong> You are browsing industry benchmarks and direct apply links.
+            <a href="{% url 'login' %}?next={% url 'explore_careers' %}" class="alert-link">Sign in</a> or
+            <a href="{% url 'signup' %}?next={% url 'explore_careers' %}" class="alert-link">create a free account</a>
+            to calculate your personal ATS match percentage and bookmark roles!
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="card border-0 shadow-sm dashboard-card mb-4">
+        <div class="card-body p-4">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label small text-muted">Search</label>
+                    <input type="text" class="form-control" id="career-search" placeholder="e.g. frontend, data, devops">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small text-muted">Domain</label>
+                    <select class="form-select" id="career-domain">
+                        <option value="">All</option>
+                        <option value="Tech">Tech</option>
+                        <option value="Marketing">Marketing</option>
+                        <option value="Finance">Finance</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small text-muted">Experience</label>
+                    <select class="form-select" id="career-experience">
+                        <option value="">All</option>
+                        <option value="Entry-Mid">Entry-Mid</option>
+                        <option value="Mid-Senior">Mid-Senior</option>
+                        <option value="Entry-Mid-Senior">Entry-Mid-Senior</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small text-muted">Sort</label>
+                    <select class="form-select" id="career-sort">
+                        <option value="demand">High demand</option>
+                        <option value="growth">Growth</option>
+                        <option value="salary">Highest salary</option>
+                    </select>
+                </div>
+                <div class="col-md-2 d-grid">
+                    <button class="btn btn-primary rounded-pill" id="career-search-btn" type="button">
+                        <i class="fas fa-magnifying-glass me-2"></i>Find roles
+                    </button>
+                </div>
+            </div>
+            <div class="small text-muted mt-3">
+                Tip: Click a role to see your match, missing keywords, and a recommended learning path.
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm dashboard-card">
+        <div class="card-body p-4">
+            <div class="row g-3" id="careers-grid">
+                <div class="col-12 text-center text-muted py-4" id="careers-loading">
+                    Loading roles...
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<template id="career-card-template">
+    <div class="col-md-6 col-lg-4">
+        <div class="career-card card border-0 shadow-sm h-100" role="button" tabindex="0" data-role-slug="">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-start gap-2">
+                    <div>
+                        <div class="badge bg-primary mb-2">Role</div>
+                        <h5 class="card-title mb-2 role-title"></h5>
+                        <div class="small text-muted mb-2">
+                            <span class="domain-pill"></span>
+                            <span class="mx-1">•</span>
+                            <span class="exp-pill"></span>
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <div class="small text-muted">Match</div>
+                        <div class="match-pill fw-bold" style="font-size: 1.05rem;">—</div>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2 flex-wrap mt-3">
+                    <button class="btn btn-sm btn-outline-primary bookmark-btn" type="button">
+                        <i class="far fa-bookmark me-1"></i>Save
+                    </button>
+                    <div class="ms-auto">
+                        <div class="small text-muted growth-label">
+                            <i class="fas fa-trend-up me-1 text-success"></i><span class="growth-pill"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-3 text-muted small">
+                    <span class="salary-pill"></span>
+                </div>
+
+                <div class="mt-3">
+                    <div class="collapse" data-role-details="">
+                        <div class="details-block">
+                            <div class="fw-semibold mb-1">Role description</div>
+                            <div class="small text-muted mb-3 role-description"></div>
+
+                            <div class="fw-semibold mb-1">Required skills</div>
+                            <div class="d-flex flex-wrap gap-1 mb-3 required-skills"></div>
+
+                            <div class="fw-semibold mb-1">Gap analysis</div>
+                            <div class="small text-muted mb-1">Missing keywords</div>
+                            <div class="d-flex flex-wrap gap-1 missing-keywords mb-3"></div>
+
+                            <div class="fw-semibold mb-1">Recommended learning path</div>
+                            <ul class="small text-muted mb-3 learning-path"></ul>
+
+                            <div class="fw-semibold mb-2">Apply now</div>
+                            <div class="d-flex flex-wrap gap-2">
+                                <a class="btn btn-sm btn-primary" target="_blank" rel="noopener" data-apply="linkedin"><i class="fab fa-linkedin me-2"></i>LinkedIn</a>
+                                <a class="btn btn-sm btn-outline-primary" target="_blank" rel="noopener" data-apply="indeed"><i class="fas fa-briefcase me-2"></i>Indeed</a>
+                                <a class="btn btn-sm btn-outline-secondary" target="_blank" rel="noopener" data-apply="glassdoor"><i class="fas fa-building me-2"></i>Glassdoor</a>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-        {% endfor %}
+        </div>
     </div>
-    <div class="text-center mt-5">
-        <a href="{% url 'signup' %}" class="btn btn-primary btn-lg rounded-pill px-4">Get Personalized Suggestions</a>
-    </div>
-</div>
+</template>
+
+{% block extra_js %}
+<script src="{% static 'js/explore.js' %}"></script>
+{% endblock %}
 {% endblock %}

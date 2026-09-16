@@ -2,65 +2,124 @@
 {% load static %}
 {% block content %}
 <div class="container py-4">
-    <h2 class="mb-4"><i class="fas fa-history me-2"></i>Your History</h2>
-    <p class="text-muted mb-4">All your career guidance sessions and resume uploads are saved here.</p>
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+            <h2 class="mb-1"><i class="fas fa-history me-2 text-primary"></i>Your Career History</h2>
+            <p class="text-muted mb-0">Track all your career guidance sessions, ATS scans, and custom-built resumes.</p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="{% url 'resume_builder' %}" class="btn btn-success rounded-pill">
+                <i class="fas fa-wand-magic-sparkles me-2"></i>New Resume
+            </a>
+            <a href="{% url 'dashboard' %}" class="btn btn-outline-primary rounded-pill">
+                <i class="fas fa-th-large me-2"></i>Dashboard
+            </a>
+        </div>
+    </div>
 
-    <div class="row">
-        <div class="col-lg-6 mb-4">
-            <div class="card border-0 shadow-sm h-100">
+    <!-- Resume Drafts Section -->
+    <div class="card border-0 shadow-sm dashboard-card mb-4">
+        <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-file-signature text-primary me-2"></i>My Created Resumes & CVs
+                </h5>
+                <a href="{% url 'resume_builder' %}" class="btn btn-sm btn-primary rounded-pill">
+                    <i class="fas fa-plus me-1"></i>Create From Scratch
+                </a>
+            </div>
+            {% if drafts_list %}
+                <div class="row g-3">
+                    {% for d in drafts_list %}
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card h-100 border p-3 rounded-3 shadow-none bg-light-subtle">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h6 class="fw-bold mb-0 text-truncate" style="max-width: 70%;">{{ d.title }}</h6>
+                                <span class="badge bg-secondary text-uppercase">{{ d.template_name }}</span>
+                            </div>
+                            <div class="small text-muted mb-3">
+                                <i class="far fa-clock me-1"></i>Updated {{ d.updated_at|date:"M d, Y H:i" }}
+                            </div>
+                            <div class="mt-auto d-flex gap-2">
+                                <a href="{% url 'resume_builder_edit' d.id %}" class="btn btn-sm btn-primary flex-grow-1">
+                                    <i class="fas fa-pen-to-square me-1"></i>Open in Builder
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-muted mb-0">You haven't built any resumes yet. <a href="{% url 'resume_builder' %}">Build your first professional CV now</a>.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Career Guidance History -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100 dashboard-card">
                 <div class="card-body p-4">
-                    <h5 class="card-title mb-3"><i class="fas fa-lightbulb me-2"></i>Career Guidance</h5>
+                    <h5 class="card-title mb-3"><i class="fas fa-lightbulb text-warning me-2"></i>Career Guidance Sessions</h5>
                     {% if guidance_list %}
                         <ul class="list-group list-group-flush">
                             {% for g in guidance_list %}
-                                <li class="list-group-item border-0 px-0 border-bottom">
-                                    <div class="small text-muted">{{ g.created_at|date:"M d, Y H:i" }}</div>
-                                    <div class="mb-1">{{ g.skills|truncatewords:15 }}</div>
-                                    <ul class="list-unstyled small mb-0">
-                                        {% for career in g.suggested_careers|slice:":3" %}
-                                            <li><i class="fas fa-briefcase text-primary me-1"></i>{{ career }}</li>
+                                <li class="list-group-item border-0 px-0 border-bottom py-3">
+                                    <div class="small text-muted mb-1"><i class="far fa-calendar-alt me-1"></i>{{ g.created_at|date:"M d, Y H:i" }}</div>
+                                    <div class="mb-2 fw-semibold">{{ g.skills|truncatewords:15 }}</div>
+                                    <div class="d-flex flex-wrap gap-1">
+                                        {% for career in g.suggested_careers|slice:":4" %}
+                                            <span class="badge scg-skill-badge"><i class="fas fa-briefcase text-primary me-1"></i>{{ career }}</span>
                                         {% endfor %}
-                                        {% if g.suggested_careers|length > 3 %}
-                                            <li class="text-muted">+{{ g.suggested_careers|length|add:"-3" }} more</li>
+                                        {% if g.suggested_careers|length > 4 %}
+                                            <span class="badge bg-secondary">+{{ g.suggested_careers|length|add:"-4" }} more</span>
                                         {% endif %}
-                                    </ul>
+                                    </div>
                                 </li>
                             {% endfor %}
                         </ul>
                     {% else %}
-                        <p class="text-muted mb-0">No career guidance yet. <a href="{% url 'dashboard' %}?tab=guidance">Get suggestions</a>.</p>
+                        <p class="text-muted mb-0">No career guidance history yet. <a href="{% url 'dashboard' %}?tab=guidance">Get instant recommendations</a>.</p>
                     {% endif %}
                 </div>
             </div>
         </div>
-        <div class="col-lg-6 mb-4">
-            <div class="card border-0 shadow-sm h-100">
+
+        <!-- Resume Uploads History -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100 dashboard-card">
                 <div class="card-body p-4">
-                    <h5 class="card-title mb-3"><i class="fas fa-file-alt me-2"></i>Resume Uploads</h5>
+                    <h5 class="card-title mb-3"><i class="fas fa-file-arrow-up text-info me-2"></i>Scanned Resume Uploads</h5>
                     {% if resume_list %}
                         <ul class="list-group list-group-flush">
                             {% for r in resume_list %}
-                                <li class="list-group-item border-0 px-0 border-bottom">
-                                    <div class="small text-muted">{{ r.uploaded_at|date:"M d, Y H:i" }}</div>
-                                    <div class="mb-1">{{ r.file.name }}</div>
+                                <li class="list-group-item border-0 px-0 border-bottom py-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <div class="fw-semibold text-truncate" style="max-width: 60%;">
+                                            <i class="fas fa-file-lines me-1 text-muted"></i>{{ r.file.name|slice:"8:" }}
+                                        </div>
+                                        <a href="{% url 'resume_download' r.id %}" class="btn btn-sm btn-outline-primary" title="Secure Download">
+                                            <i class="fas fa-download me-1"></i>Download
+                                        </a>
+                                    </div>
+                                    <div class="small text-muted mb-2"><i class="far fa-clock me-1"></i>{{ r.uploaded_at|date:"M d, Y H:i" }}</div>
                                     {% if r.analysis_result %}
-                                        <span class="badge bg-primary">Score: {{ r.analysis_result.score }}%</span>
+                                        <span class="badge bg-primary">ATS Score: {{ r.analysis_result.score }}%</span>
                                         {% if r.analysis_result.found_skills %}
-                                            <span class="small text-muted ms-1">{{ r.analysis_result.found_skills|length }} skills</span>
+                                            <span class="small text-muted ms-2">{{ r.analysis_result.found_skills|length }} skills matched</span>
                                         {% endif %}
                                     {% else %}
-                                        <span class="badge bg-secondary">Saved</span>
+                                        <span class="badge bg-secondary">Stored</span>
                                     {% endif %}
                                 </li>
                             {% endfor %}
                         </ul>
                     {% else %}
-                        <p class="text-muted mb-0">No resume uploads yet. <a href="{% url 'dashboard' %}?tab=analyzer">Upload a resume</a>.</p>
+                        <p class="text-muted mb-0">No resumes scanned yet. <a href="{% url 'dashboard' %}?tab=analyzer">Upload a resume for ATS analysis</a>.</p>
                     {% endif %}
                 </div>
             </div>
         </div>
     </div>
-    <a href="{% url 'dashboard' %}" class="btn btn-primary rounded-pill"><i class="fas fa-th-large me-2"></i>Back to Dashboard</a>
 </div>
 {% endblock %}

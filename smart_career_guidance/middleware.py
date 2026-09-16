@@ -1,32 +1,50 @@
-"""Custom middleware for development features."""
+"""Custom middleware for development and network testing features."""
+import ipaddress
+import urllib.parse
 from django.conf import settings
+
+
+def _is_safe_local_origin(origin: str) -> bool:
+    """
+    Strictly validate that an origin is localhost or a private local IPv4 address.
+    Rejects attacker hostnames with substring matches (e.g. localhost.evil.com).
+    """
+    if not origin:
+        return False
+    try:
+        parsed = urllib.parse.urlsplit(origin)
+        hostname = parsed.hostname
+        if not hostname:
+            return False
+        if hostname in ("localhost", "127.0.0.1"):
+            return True
+        # Check for RFC 1918 private IP address
+        ip = ipaddress.ip_address(hostname)
+        return ip.is_private or ip.is_loopback
+    except Exception:
+        return False
 
 
 class DynamicCSRFMiddleware:
     """
-    In DEBUG mode, automatically add the request's origin to CSRF_TRUSTED_ORIGINS.
-    This allows testing from phones and other devices on the local network.
+    In DEBUG mode, automatically add legitimate local network IPs to CSRF_TRUSTED_ORIGINS.
+    This safely allows mobile testing over local Wi-Fi without exposing CSRF to external domains.
     """
     def __init__(self, get_response):
         self.get_response = get_response
 
     def __call__(self, request):
-        if settings.DEBUG:
+        if getattr(settings, 'DEBUG', False):
             origin = request.META.get('HTTP_ORIGIN', '')
-            referer = request.META.get('HTTP_REFERER', '')
             host = request.get_host()
-            
-            # Build origin from host if not present
+
             if not origin and host:
                 scheme = 'https' if request.is_secure() else 'http'
                 origin = f'{scheme}://{host}'
-            
-            # Dynamically add to trusted origins if it's a local/private IP
-            if origin:
+
+            if origin and _is_safe_local_origin(origin):
                 trusted = getattr(settings, 'CSRF_TRUSTED_ORIGINS', [])
                 if origin not in trusted:
-                    # Only trust local/private IPs
-                    if any(x in origin for x in ['127.0.0.1', 'localhost', '192.168.', '10.', '172.16.', '172.17.', '172.18.', '172.19.', '172.20.', '172.21.', '172.22.', '172.23.', '172.24.', '172.25.', '172.26.', '172.27.', '172.28.', '172.29.', '172.30.', '172.31.']):
-                        settings.CSRF_TRUSTED_ORIGINS = list(trusted) + [origin]
-        
+                    settings.CSRF_TRUSTED_ORIGINS = list(trusted) + [origin]
+
         return self.get_response(request)

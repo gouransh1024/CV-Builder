@@ -1,14 +1,29 @@
+import os
 from pathlib import Path
+import socket
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'your-secret-key-here'  # Change in production
-DEBUG = True
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '*']
+# Security settings
+SECRET_KEY = os.environ.get(
+    'SECRET_KEY',
+    'k8#m2$v9!x4*p1(q7^z3@r5t6y7u8i9o0a!s#d$f%g^h&j*l+w~e_b=n?c/v.m,z-scg-prod'
+)
 
-# CSRF settings for network access (phones, other devices)
-# In DEBUG mode, dynamically add local IP to trusted origins
-import socket
+DEBUG = os.environ.get('DEBUG', 'True').lower() in ('true', '1', 'yes')
+
+# Allowed Hosts: safe defaults with local IP discovery for development
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'testserver']
+if DEBUG:
+    try:
+        hostname = socket.gethostname()
+        local_ip = socket.gethostbyname(hostname)
+        if local_ip not in ALLOWED_HOSTS:
+            ALLOWED_HOSTS.append(local_ip)
+    except Exception:
+        pass
+
+# CSRF settings for local development and mobile network testing
 _csrf_origins = ['http://127.0.0.1:8000', 'http://localhost:8000']
 if DEBUG:
     try:
@@ -17,15 +32,14 @@ if DEBUG:
         _csrf_origins.append(f'http://{local_ip}:8000')
     except Exception:
         pass
-    # Common private network ranges
-    _csrf_origins.extend([
-        'http://192.168.1.1:8000',
-        'http://10.0.0.1:8000',
-    ])
-CSRF_TRUSTED_ORIGINS = _csrf_origins
 
-# For development: allow CSRF from same-origin requests
+CSRF_TRUSTED_ORIGINS = _csrf_origins
 CSRF_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_SAMESITE = 'Lax'
+
+# File upload ceilings (5 MB maximum)
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024
+DATA_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -34,14 +48,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'career_app',  # Your app
+    'career_app',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'smart_career_guidance.middleware.DynamicCSRFMiddleware',  # Auto-trust local network IPs
+    'smart_career_guidance.middleware.DynamicCSRFMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',

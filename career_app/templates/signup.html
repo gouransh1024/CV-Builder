@@ -1,30 +1,61 @@
 {% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Create Free Account | Smart Career Guidance{% endblock %}
+
 {% block content %}
-<div class="auth-page">
-    <div class="container py-5">
+<div class="auth-page py-5">
+    <div class="container">
         <div class="row justify-content-center">
-            <div class="col-md-6">
-                <div class="card auth-card shadow border-0">
-                    <div class="card-body p-4 p-md-5">
-                        <h3 class="text-center mb-4"><i class="fas fa-user-plus me-2"></i>Create Account</h3>
-                        {% if form.non_field_errors %}
-                            <div class="alert alert-danger">{{ form.non_field_errors.0 }}</div>
+            <div class="col-12 col-sm-10 col-md-8 col-lg-6" style="max-width: 520px;">
+                <div class="card auth-card shadow-lg border-0 p-3 p-sm-4">
+                    <div class="card-body">
+                        <div class="text-center mb-4">
+                            <div class="d-inline-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary rounded-circle mb-2" style="width: 60px; height: 60px; font-size: 26px;">
+                                <i class="fas fa-user-plus text-primary"></i>
+                            </div>
+                            <h3 class="fw-bold mb-1">Create Your Free Account</h3>
+                            <p class="text-muted small mb-0">Build pro resumes, get AI career guidance, and pass ATS filters</p>
+                        </div>
+
+                        {% if next %}
+                        <div class="alert alert-info border-0 rounded-3 py-2 px-3 small d-flex align-items-center gap-2 mb-3">
+                            <i class="fas fa-user-plus text-info"></i>
+                            <span>Create your account to immediately unlock and use all features.</span>
+                        </div>
                         {% endif %}
+
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger border-0 small py-2 mb-3">
+                                {{ form.non_field_errors.0 }}
+                            </div>
+                        {% endif %}
+
                         <form method="post" action="{% url 'signup' %}">
                             {% csrf_token %}
+                            {% if next %}
+                            <input type="hidden" name="next" value="{{ next }}">
+                            {% endif %}
                             {% for field in form %}
                                 <div class="mb-3">
-                                    <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                    <label class="form-label small fw-semibold" for="{{ field.id_for_label }}">{{ field.label }}</label>
                                     {{ field }}
                                     {% if field.errors %}
-                                        <div class="invalid-feedback d-block">{{ field.errors.0 }}</div>
+                                        <div class="invalid-feedback d-block small mt-1">{{ field.errors.0 }}</div>
                                     {% endif %}
-                                    {% if field.help_text %}<small class="text-muted">{{ field.help_text }}</small>{% endif %}
+                                    {% if field.help_text %}
+                                        <div class="form-text small text-muted mt-1">{{ field.help_text }}</div>
+                                    {% endif %}
                                 </div>
                             {% endfor %}
-                            <button type="submit" class="btn btn-primary btn-lg w-100 rounded-pill mt-2">Sign Up</button>
+                            <button type="submit" class="btn btn-primary btn-lg w-100 rounded-pill shadow-sm mt-3">
+                                <i class="fas fa-rocket me-1"></i>Create Free Account
+                            </button>
                         </form>
-                        <p class="text-center mt-4 mb-0 text-muted">Already have an account? <a href="{% url 'login' %}">Login</a></p>
+
+                        <div class="text-center mt-4 pt-2 border-top">
+                            <p class="small text-muted mb-0">Already have an account? <a href="{% url 'login' %}{% if next %}?next={{ next|urlencode }}{% endif %}" class="fw-bold text-primary">Sign In</a></p>
+                        </div>
                     </div>
                 </div>
             </div>

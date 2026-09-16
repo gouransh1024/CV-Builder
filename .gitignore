@@ -31,6 +31,7 @@ db.sqlite3
 .env
 
 # IDE
+.cursor/
 .vscode/
 .idea/
 *.swp
@@ -42,4 +43,11 @@ db.sqlite3
 Thumbs.db
 
 # Virtual Environment
+.venv/
 venv/
+ENV/
+env/
+
+# Local configuration
+.env
+*.sqlite3-journal

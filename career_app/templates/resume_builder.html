@@ -1,0 +1,432 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Interactive Resume & CV Builder | Smart Career Guidance{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/resume_templates.css' %}">
+<style>
+.builder-container {
+  max-width: 1600px;
+}
+.builder-toolbar {
+  background: var(--card-bg, #ffffff);
+  border: 1px solid rgba(0,0,0,0.08);
+  border-radius: 12px;
+  padding: 14px 20px;
+}
+.color-picker-pill {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: inline-block;
+  cursor: pointer;
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 0 1px #cbd5e1;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.color-picker-pill:hover, .color-picker-pill.active {
+  transform: scale(1.2);
+  box-shadow: 0 0 0 2px #0f172a;
+}
+.preview-sticky-wrap {
+  position: sticky;
+  top: 80px;
+  max-height: calc(100vh - 100px);
+  overflow-y: auto;
+  padding-bottom: 40px;
+}
+.ats-circle {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 800;
+  border: 6px solid #2563eb;
+  margin: 0 auto;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4 builder-container">
+    <!-- Builder Top Toolbar -->
+    <div class="builder-toolbar shadow-sm mb-4">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <div class="d-flex align-items-center gap-2 flex-grow-1 flex-md-grow-0">
+                <i class="fas fa-wand-magic-sparkles text-primary fs-4"></i>
+                <div>
+                    <input type="text" class="form-control form-control-sm fw-bold border-0 bg-transparent px-1 fs-6" id="draft-title" value="{{ draft_title }}" placeholder="Resume Name (e.g. Senior Developer CV)">
+                    <small class="text-muted d-block px-1">Live Reactive Resume / CV Builder</small>
+                </div>
+            </div>
+
+            <!-- Customizer Controls -->
+            <div class="d-flex flex-wrap align-items-center gap-2">
+                <!-- Template Picker -->
+                <div class="d-flex align-items-center gap-1">
+                    <label class="small text-muted mb-0 d-none d-lg-inline">Template:</label>
+                    <select class="form-select form-select-sm rounded-pill" id="template-select" style="min-width: 140px;">
+                        <option value="modern" {% if draft_template == 'modern' %}selected{% endif %}>Modern Tech</option>
+                        <option value="executive" {% if draft_template == 'executive' %}selected{% endif %}>Executive Pro</option>
+                        <option value="minimal" {% if draft_template == 'minimal' %}selected{% endif %}>Clean Minimal</option>
+                        <option value="creative" {% if draft_template == 'creative' %}selected{% endif %}>Creative Split</option>
+                    </select>
+                </div>
+
+                <!-- Font Picker -->
+                <div class="d-flex align-items-center gap-1">
+                    <label class="small text-muted mb-0 d-none d-lg-inline">Font:</label>
+                    <select class="form-select form-select-sm rounded-pill" id="font-select" style="min-width: 110px;">
+                        <option value="Inter" {% if draft_font == 'Inter' %}selected{% endif %}>Inter</option>
+                        <option value="Outfit" {% if draft_font == 'Outfit' %}selected{% endif %}>Outfit</option>
+                        <option value="Roboto" {% if draft_font == 'Roboto' %}selected{% endif %}>Roboto</option>
+                        <option value="Merriweather" {% if draft_font == 'Merriweather' %}selected{% endif %}>Merriweather</option>
+                    </select>
+                </div>
+
+                <!-- Accent Color Picker -->
+                <div class="d-flex align-items-center gap-1 px-2 border-start border-end">
+                    <span class="color-picker-pill active" data-color="#2563eb" style="background: #2563eb;" title="Royal Blue"></span>
+                    <span class="color-picker-pill" data-color="#0f766e" style="background: #0f766e;" title="Deep Emerald"></span>
+                    <span class="color-picker-pill" data-color="#334155" style="background: #334155;" title="Slate Charcoal"></span>
+                    <span class="color-picker-pill" data-color="#7c3aed" style="background: #7c3aed;" title="Royal Purple"></span>
+                    <span class="color-picker-pill" data-color="#be123c" style="background: #be123c;" title="Crimson Ruby"></span>
+                </div>
+
+                <!-- Action Buttons -->
+                <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill" id="load-sample-btn" title="Prefill with high-impact software engineer data">
+                    <i class="fas fa-magic me-1"></i>Sample
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill" id="clear-all-btn" title="Clear all fields">
+                    <i class="fas fa-eraser me-1"></i>Clear
+                </button>
+                <button type="button" class="btn btn-sm btn-info text-white rounded-pill" id="analyze-resume-btn">
+                    <i class="fas fa-chart-simple me-1"></i>Scan ATS
+                </button>
+                {% if user.is_authenticated %}
+                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill" data-bs-toggle="modal" data-bs-target="#savedDraftsModal">
+                    <i class="fas fa-folder-open me-1"></i>My Resumes
+                </button>
+                <button type="button" class="btn btn-sm btn-primary rounded-pill" id="save-draft-btn">
+                    <i class="fas fa-floppy-disk me-1"></i>Save Draft
+                </button>
+                {% else %}
+                <a href="{% url 'login' %}?next={% url 'resume_builder' %}" class="btn btn-sm btn-outline-primary rounded-pill">
+                    <i class="fas fa-arrow-right-to-bracket me-1"></i>Sign in to Save
+                </a>
+                {% endif %}
+                <button type="button" class="btn btn-sm btn-success rounded-pill" id="print-resume-btn">
+                    <i class="fas fa-download me-1"></i>Download PDF
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden state bridge -->
+    <input type="hidden" id="active-draft-id" value="{{ draft_id }}">
+    <script id="initial-draft-json" type="application/json">
+        {{ active_draft_json|safe }}
+    </script>
+
+    <!-- Mobile / Tablet View Switcher (Visible on < 1200px) -->
+    <div class="d-flex d-xl-none justify-content-center mb-3">
+        <div class="btn-group p-1 bg-white rounded-pill shadow-sm border" role="group" id="builder-mobile-toggle-group">
+            <button type="button" class="btn btn-sm btn-primary rounded-pill px-4" id="toggle-view-editor">
+                <i class="fas fa-pen-to-square me-1"></i>Editor Form
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-4" id="toggle-view-preview">
+                <i class="fas fa-eye me-1"></i>Live CV Preview
+            </button>
+        </div>
+    </div>
+
+    <!-- Split Screen: Form Editor (Left) & Real-time Live Preview (Right) -->
+    <div class="row g-4">
+        <!-- Form Editor Column -->
+        <div class="col-xl-5 builder-editor-col" id="builder-editor-col">
+            <form id="resume-form" onsubmit="return false;">
+                <div class="accordion shadow-sm" id="resumeAccordion">
+                    <!-- 1. Personal Info -->
+                    <div class="accordion-item border-0 mb-3 rounded-3 shadow-none overflow-hidden">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePersonal">
+                                <i class="fas fa-id-card text-primary me-2"></i>Personal Contact Details
+                            </button>
+                        </h2>
+                        <div id="collapsePersonal" class="accordion-collapse collapse show">
+                            <div class="accordion-body p-3">
+                                <div class="row g-2 mb-2">
+                                    <div class="col-md-6">
+                                        <label class="form-label small text-muted">Full Name *</label>
+                                        <input type="text" class="form-control form-control-sm" id="personal-name" placeholder="e.g. Alex Morgan">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small text-muted">Job Title / Headline *</label>
+                                        <input type="text" class="form-control form-control-sm" id="personal-title" placeholder="e.g. Senior Software Engineer">
+                                    </div>
+                                </div>
+                                <div class="row g-2 mb-2">
+                                    <div class="col-md-6">
+                                        <label class="form-label small text-muted">Email *</label>
+                                        <input type="email" class="form-control form-control-sm" id="personal-email" placeholder="alex.morgan@email.com">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small text-muted">Phone Number</label>
+                                        <input type="tel" class="form-control form-control-sm" id="personal-phone" placeholder="+1 (555) 019-2834">
+                                    </div>
+                                </div>
+                                <div class="row g-2 mb-2">
+                                    <div class="col-md-6">
+                                        <label class="form-label small text-muted">Location (City, State / Country)</label>
+                                        <input type="text" class="form-control form-control-sm" id="personal-location" placeholder="San Francisco, CA">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small text-muted">Portfolio / Personal Website</label>
+                                        <input type="text" class="form-control form-control-sm" id="personal-website" placeholder="https://alexmorgan.dev">
+                                    </div>
+                                </div>
+                                <div class="row g-2">
+                                    <div class="col-md-6">
+                                        <label class="form-label small text-muted">LinkedIn Profile</label>
+                                        <input type="text" class="form-control form-control-sm" id="personal-linkedin" placeholder="linkedin.com/in/alexmorgan">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small text-muted">GitHub Profile</label>
+                                        <input type="text" class="form-control form-control-sm" id="personal-github" placeholder="github.com/alexmorgan">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. Professional Summary -->
+                    <div class="accordion-item border-0 mb-3 rounded-3 shadow-none overflow-hidden">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSummary">
+                                <i class="fas fa-align-left text-primary me-2"></i>Professional Summary / Objective
+                            </button>
+                        </h2>
+                        <div id="collapseSummary" class="accordion-collapse collapse">
+                            <div class="accordion-body p-3">
+                                <textarea class="form-control" id="summary-input" rows="4" placeholder="Brief 2-4 sentence summary highlighting your core skills, years of experience, and notable achievements..."></textarea>
+                                <small class="text-muted mt-1 d-block">Tip: Mention specific technologies and quantifiable impacts (e.g. 'improved performance by 30%').</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3. Work Experience -->
+                    <div class="accordion-item border-0 mb-3 rounded-3 shadow-none overflow-hidden">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseExp">
+                                <i class="fas fa-briefcase text-primary me-2"></i>Work Experience
+                            </button>
+                        </h2>
+                        <div id="collapseExp" class="accordion-collapse collapse">
+                            <div class="accordion-body p-3">
+                                <div id="experiences-list"></div>
+                                <button type="button" class="btn btn-sm btn-outline-primary w-100 rounded-pill mt-2" id="add-exp-btn">
+                                    <i class="fas fa-plus me-1"></i>Add Work Position
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 4. Education -->
+                    <div class="accordion-item border-0 mb-3 rounded-3 shadow-none overflow-hidden">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseEdu">
+                                <i class="fas fa-graduation-cap text-primary me-2"></i>Education
+                            </button>
+                        </h2>
+                        <div id="collapseEdu" class="accordion-collapse collapse">
+                            <div class="accordion-body p-3">
+                                <div id="education-list"></div>
+                                <button type="button" class="btn btn-sm btn-outline-primary w-100 rounded-pill mt-2" id="add-edu-btn">
+                                    <i class="fas fa-plus me-1"></i>Add Degree / School
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 5. Skills & Competencies -->
+                    <div class="accordion-item border-0 mb-3 rounded-3 shadow-none overflow-hidden">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSkills">
+                                <i class="fas fa-code text-primary me-2"></i>Skills & Competencies
+                            </button>
+                        </h2>
+                        <div id="collapseSkills" class="accordion-collapse collapse">
+                            <div class="accordion-body p-3">
+                                <div class="mb-3">
+                                    <label class="form-label small text-muted">Technical / Hard Skills (comma-separated)</label>
+                                    <textarea class="form-control form-control-sm" id="skills-technical" rows="3" placeholder="e.g. Python, React, SQL, Docker, AWS, Git, REST APIs, TypeScript"></textarea>
+                                </div>
+                                <div>
+                                    <label class="form-label small text-muted">Soft Skills / Methodologies (comma-separated)</label>
+                                    <input type="text" class="form-control form-control-sm" id="skills-soft" placeholder="e.g. Agile/Scrum, Team Leadership, Problem Solving, Communication">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 6. Projects -->
+                    <div class="accordion-item border-0 mb-3 rounded-3 shadow-none overflow-hidden">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseProjects">
+                                <i class="fas fa-diagram-project text-primary me-2"></i>Key Projects & Portfolio
+                            </button>
+                        </h2>
+                        <div id="collapseProjects" class="accordion-collapse collapse">
+                            <div class="accordion-body p-3">
+                                <div id="projects-list"></div>
+                                <button type="button" class="btn btn-sm btn-outline-primary w-100 rounded-pill mt-2" id="add-proj-btn">
+                                    <i class="fas fa-plus me-1"></i>Add Project
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 7. Certifications & Languages -->
+                    <div class="accordion-item border-0 mb-3 rounded-3 shadow-none overflow-hidden">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCerts">
+                                <i class="fas fa-award text-primary me-2"></i>Certifications & Languages
+                            </button>
+                        </h2>
+                        <div id="collapseCerts" class="accordion-collapse collapse">
+                            <div class="accordion-body p-3">
+                                <label class="form-label small text-muted">Certifications</label>
+                                <div id="certifications-list"></div>
+                                <button type="button" class="btn btn-sm btn-outline-primary w-100 rounded-pill mt-1 mb-3" id="add-cert-btn">
+                                    <i class="fas fa-plus me-1"></i>Add Certification
+                                </button>
+
+                                <label class="form-label small text-muted">Languages</label>
+                                <input type="text" class="form-control form-control-sm" id="languages-input" placeholder="e.g. English (Native), Spanish (Fluent), French (Basic)">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Live Preview Sticky Column (Right) -->
+        <div class="col-xl-7 builder-preview-col" id="builder-preview-col">
+            <div class="preview-sticky-wrap">
+                <div class="d-flex flex-wrap justify-content-between align-items-center mb-2 px-1 gap-2">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="small text-muted fw-bold"><i class="fas fa-eye me-1 text-primary"></i>Live Document Preview</span>
+                        <span class="badge bg-success-subtle text-success border border-success"><i class="fas fa-bolt me-1"></i>Real-time</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-1">
+                        <button type="button" class="btn btn-xs btn-outline-secondary py-1 px-2 rounded-pill preview-scale-btn active" data-scale="1" title="100% Size">100%</button>
+                        <button type="button" class="btn btn-xs btn-outline-secondary py-1 px-2 rounded-pill preview-scale-btn" data-scale="0.85" title="85% Fit">85%</button>
+                        <button type="button" class="btn btn-xs btn-outline-secondary py-1 px-2 rounded-pill preview-scale-btn" data-scale="0.75" title="75% Fit">75%</button>
+                        <button type="button" class="btn btn-xs btn-outline-primary py-1 px-2 rounded-pill" id="preview-auto-fit-btn" title="Fit to Screen Width"><i class="fas fa-arrows-left-right"></i> Fit</button>
+                    </div>
+                </div>
+                <div class="preview-viewport-container">
+                    <div class="resume-paper-scaler" id="resume-paper-scaler">
+                        <div id="resume-preview-pane"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ATS Score Modal -->
+<div class="modal fade" id="ats-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-bottom">
+                <h5 class="modal-title"><i class="fas fa-chart-line text-primary me-2"></i>Instant ATS Score & Feedback</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4 text-center">
+                <div class="mb-3">
+                    <label class="form-label small text-muted">Target Career Role for ATS Analysis</label>
+                    <select class="form-select form-select-sm" id="ats-target-role">
+                        <option value="">Auto-Detect / General Tech</option>
+                        <option value="software_developer">Software Developer</option>
+                        <option value="frontend_developer">Frontend Developer</option>
+                        <option value="backend_developer">Backend Developer</option>
+                        <option value="data_analyst">Data Analyst</option>
+                        <option value="devops_engineer">DevOps Engineer</option>
+                        <option value="product_manager">Product Manager</option>
+                    </select>
+                </div>
+                <div class="ats-circle mb-2" id="ats-modal-score">
+                    <span id="ats-modal-score-text">0%</span>
+                </div>
+                <small class="text-muted mb-3 d-block">Estimated ATS Match Score</small>
+
+                <div class="text-start mb-3">
+                    <h6 class="small text-uppercase text-muted fw-bold">Detected Skills</h6>
+                    <div id="ats-modal-skills" class="d-flex flex-wrap gap-1"></div>
+                </div>
+
+                <div class="text-start">
+                    <h6 class="small text-uppercase text-muted fw-bold">Optimization Tips</h6>
+                    <ul class="list-group list-group-flush border rounded-3 p-1" id="ats-modal-feedback"></ul>
+                </div>
+            </div>
+            <div class="modal-footer border-top">
+                <button type="button" class="btn btn-secondary rounded-pill btn-sm" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- My Saved Drafts Modal -->
+{% if user.is_authenticated %}
+<div class="modal fade" id="savedDraftsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-folder-open text-primary me-2"></i>My Saved Resumes</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                {% if user_drafts %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Resume Title</th>
+                                <th>Template</th>
+                                <th>Last Updated</th>
+                                <th class="text-end">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for d in user_drafts %}
+                            <tr>
+                                <td class="fw-bold">{{ d.title }}</td>
+                                <td><span class="badge bg-secondary text-uppercase">{{ d.template_name }}</span></td>
+                                <td class="small text-muted">{{ d.updated_at|date:"M d, Y H:i" }}</td>
+                                <td class="text-end">
+                                    <a href="{% url 'resume_builder_edit' d.id %}" class="btn btn-sm btn-primary rounded-pill px-3">Open</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted text-center py-4 mb-0">No saved resumes found. Click 'Save Draft' in the builder toolbar to save your progress.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/resume_builder.js' %}"></script>
+{% endblock %}

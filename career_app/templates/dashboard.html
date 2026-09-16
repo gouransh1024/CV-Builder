@@ -1,8 +1,54 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block content %}
-<div class="container py-4">
-    <h2 class="mb-4"><i class="fas fa-th-large me-2"></i>Dashboard</h2>
+<div class="container py-4 dashboard">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+            <h2 class="mb-1"><i class="fas fa-chart-pie me-2 text-primary"></i>Career Intelligence Dashboard</h2>
+            <p class="text-muted mb-0">Interactive ML career recommendations, ATS analytics, and resume insights.</p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="{% url 'resume_builder' %}" class="btn btn-warning rounded-pill shadow-sm text-dark fw-semibold">
+                <i class="fas fa-wand-magic-sparkles me-1"></i> Build Resume / CV
+            </a>
+            <button class="btn btn-outline-secondary rounded-pill" id="theme-toggle-btn" type="button" title="Toggle light/dark mode">
+                <i class="fas fa-moon me-2"></i>Theme
+            </button>
+        </div>
+    </div>
+
+    <!-- Executive Career Metric Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="metric-card shadow-sm h-100 p-3">
+                <span class="text-muted small"><i class="fas fa-file-invoice text-primary me-1"></i>Created Resumes</span>
+                <strong class="h3 d-block my-1">{% if user.resume_drafts %}{{ user.resume_drafts.count }}{% else %}0{% endif %}</strong>
+                <a href="{% url 'resume_builder' %}" class="small text-primary fw-semibold">Open Builder &rarr;</a>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="metric-card shadow-sm h-100 p-3">
+                <span class="text-muted small"><i class="fas fa-file-waveform text-info me-1"></i>Scanned Resumes</span>
+                <strong class="h3 d-block my-1">{% if user.resume_set %}{{ user.resume_set.count }}{% else %}0{% endif %}</strong>
+                <a href="{% url 'history' %}" class="small text-info fw-semibold">View History &rarr;</a>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="metric-card shadow-sm h-100 p-3">
+                <span class="text-muted small"><i class="fas fa-lightbulb text-warning me-1"></i>Guidance Runs</span>
+                <strong class="h3 d-block my-1">{{ recent_guidance|length }}</strong>
+                <span class="small text-warning fw-semibold">Active Model</span>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="metric-card shadow-sm h-100 p-3">
+                <span class="text-muted small"><i class="fas fa-rocket text-success me-1"></i>Role Directory</span>
+                <strong class="h3 d-block my-1">37+</strong>
+                <a href="{% url 'explore_careers' %}" class="small text-success fw-semibold">Browse Roles &rarr;</a>
+            </div>
+        </div>
+    </div>
+
     <ul class="nav nav-tabs nav-fill mb-4" id="dashboardTabs" role="tablist">
         <li class="nav-item" role="presentation">
             <button class="nav-link {% if tab == 'guidance' or not tab %}active{% endif %}" id="guidance-tab" data-bs-toggle="tab" data-bs-target="#guidance" type="button" role="tab">
@@ -15,11 +61,12 @@
             </button>
         </li>
     </ul>
-    <div class="tab-content" id="dashboardTabContent">
+
+    <div class="tab-content">
         <div class="tab-pane fade {% if tab == 'guidance' or not tab %}show active{% endif %}" id="guidance" role="tabpanel">
-            <div class="row">
-                <div class="col-lg-5 mb-4">
-                    <div class="card border-0 shadow-sm h-100">
+            <div class="row g-4">
+                <div class="col-lg-5">
+                    <div class="card border-0 shadow-sm h-100 dashboard-card">
                         <div class="card-body p-4">
                             <h5 class="card-title mb-3"><i class="fas fa-edit me-2"></i>Get Career Suggestions</h5>
                             <p class="text-muted small mb-3">Enter your skills, interests, or keywords (comma or space separated).</p>
@@ -35,113 +82,219 @@
                 </div>
                 <div class="col-lg-7">
                     {% if suggestions %}
-                        <div class="card border-0 shadow-sm mb-4">
-                            <div class="card-body p-4">
-                                <h5 class="card-title text-success"><i class="fas fa-check-circle me-2"></i>Career suggestions for you</h5>
-                                {% if skills_submitted %}
-                                    <p class="text-muted small mb-3">Based on: {{ skills_submitted }}</p>
-                                {% endif %}
-                                <ul class="list-group list-group-flush">
-                                    {% for career in suggestions %}
-                                        <li class="list-group-item d-flex align-items-center border-0 px-0">
-                                            <i class="fas fa-briefcase text-primary me-2"></i>{{ career }}
-                                        </li>
-                                    {% endfor %}
-                                </ul>
-                            </div>
-                        </div>
-                    {% endif %}
-                    {% if recent_guidance %}
-                        <div class="card border-0 shadow-sm">
-                            <div class="card-body p-4">
-                                <h6 class="card-title"><i class="fas fa-history me-2"></i>Recent guidance</h6>
-                                <ul class="list-group list-group-flush">
-                                    {% for g in recent_guidance %}
-                                        <li class="list-group-item border-0 px-0 small">
-                                            <span class="text-muted">{{ g.created_at|date:"M d, Y" }}</span> — {{ g.skills|truncatewords:10 }}
-                                        </li>
-                                    {% endfor %}
-                                </ul>
-                                <a href="{% url 'history' %}" class="btn btn-sm btn-outline-primary mt-2">View full history</a>
-                            </div>
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-        <div class="tab-pane fade {% if tab == 'analyzer' %}show active{% endif %}" id="analyzer" role="tabpanel">
-            <div class="row">
-                <div class="col-lg-5 mb-4">
-                    <div class="card border-0 shadow-sm h-100">
+                    <div class="card border-0 shadow-sm mb-4 dashboard-card">
                         <div class="card-body p-4">
-                            <h5 class="card-title mb-3"><i class="fas fa-upload me-2"></i>Upload Resume</h5>
-                            <p class="text-muted small mb-3">PDF, TXT, DOCX, or image (JPG, PNG, GIF, WEBP). We'll extract keywords and suggest improvements.</p>
-                            <form method="post" action="{% url 'analyzer' %}" enctype="multipart/form-data">
-                                {% csrf_token %}
-                                <label class="form-label" for="id_file">Resume file</label>
-                                {{ analyzer_form.file }}
-                                <button type="submit" class="btn btn-primary mt-3 w-100 rounded-pill">
-                                    <i class="fas fa-chart-line me-2"></i>Analyze
-                                </button>
-                            </form>
+                            <h5 class="card-title text-success"><i class="fas fa-check-circle me-2"></i>Career suggestions for you</h5>
+                            {% if skills_submitted %}<p class="text-muted small mb-3">Based on: {{ skills_submitted }}</p>{% endif %}
+                            <ul class="list-group list-group-flush">
+                                {% for career in suggestions %}
+                                <li class="list-group-item d-flex align-items-center border-0 px-0">
+                                    <i class="fas fa-briefcase text-primary me-2"></i>{{ career }}
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                    {% endif %}
+                    <div class="card border-0 shadow-sm dashboard-card">
+                        <div class="card-body p-4">
+                            <h6 class="card-title"><i class="fas fa-history me-2"></i>Recent guidance</h6>
+                            {% if recent_guidance %}
+                            <ul class="list-group list-group-flush">
+                                {% for g in recent_guidance %}
+                                <li class="list-group-item border-0 px-0 small">
+                                    <span class="text-muted">{{ g.created_at|date:"M d, Y" }}</span> — {{ g.skills|truncatewords:10 }}
+                                </li>
+                                {% endfor %}
+                            </ul>
+                            {% else %}
+                            <p class="text-muted mb-0">No guidance sessions yet.</p>
+                            {% endif %}
+                            <a href="{% url 'history' %}" class="btn btn-sm btn-outline-primary mt-3">View full history</a>
                         </div>
                     </div>
                 </div>
-                <div class="col-lg-7">
-                    {% if analysis %}
-                        <div class="card border-0 shadow-sm mb-4">
-                            <div class="card-body p-4">
-                                <h5 class="card-title"><i class="fas fa-chart-pie me-2"></i>Analysis results</h5>
-                                <div class="mb-3">
-                                    <span class="badge bg-primary fs-6">Score: {{ analysis.score }}%</span>
+            </div>
+        </div>
+
+        <div class="tab-pane fade {% if tab == 'analyzer' %}show active{% endif %}" id="analyzer" role="tabpanel">
+            <div class="row g-4">
+                <div class="col-xl-4">
+                    <div class="card border-0 shadow-sm dashboard-card mb-4">
+                        <div class="card-body p-4">
+                            <h5 class="card-title mb-3"><i class="fas fa-upload me-2"></i>Upload Resume</h5>
+                            <p class="text-muted small mb-3">PDF, TXT, DOCX, or image (JPG, PNG, GIF, WEBP).</p>
+                            <form method="post" action="{% url 'analyzer' %}" enctype="multipart/form-data" id="analyzer-form">
+                                {% csrf_token %}
+                                <label class="form-label" for="id_target_role">Target role</label>
+                                {{ analyzer_form.target_role }}
+                                <label class="form-label mt-3" for="id_file">Resume file</label>
+                                {{ analyzer_form.file }}
+                                <button type="submit" class="btn btn-primary mt-3 w-100 rounded-pill">
+                                    <i class="fas fa-chart-line me-2"></i>Analyze Resume
+                                </button>
+                            </form>
+                            <div id="analysis-progress" class="mt-3 d-none">
+                                <div class="small text-muted mb-2">Real-time analysis progress</div>
+                                <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100">
+                                    <div class="progress-bar progress-bar-striped progress-bar-animated" style="width: 10%"></div>
                                 </div>
-                                <p class="mb-3">{{ analysis.suggestions }}</p>
-                                {% if analysis.found_skills %}
-                                    <p class="small mb-1 fw-bold">Detected skills:</p>
-                                    <div class="d-flex flex-wrap gap-1 mb-3">
-                                        {% for s in analysis.found_skills %}
-                                            <span class="badge bg-success">{{ s }}</span>
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                                {% if analysis.keywords %}
-                                    <p class="small mb-1 fw-bold">Top keywords:</p>
-                                    <div class="d-flex flex-wrap gap-1">
-                                        {% for k in analysis.keywords %}
-                                            <span class="badge bg-light text-dark border">{{ k }}</span>
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
+                                <ul class="small text-muted mt-2 mb-0 ps-3" id="analysis-steps"></ul>
                             </div>
                         </div>
-                    {% endif %}
-                    {% if recent_resumes %}
-                        <div class="card border-0 shadow-sm">
-                            <div class="card-body p-4">
-                                <h6 class="card-title"><i class="fas fa-history me-2"></i>Recent uploads</h6>
-                                <ul class="list-group list-group-flush">
-                                    {% for r in recent_resumes %}
-                                        <li class="list-group-item border-0 px-0 small">
-                                            {{ r.file.name }} — {{ r.uploaded_at|date:"M d, Y H:i" }}
-                                        </li>
-                                    {% endfor %}
-                                </ul>
-                                <a href="{% url 'history' %}" class="btn btn-sm btn-outline-primary mt-2">View full history</a>
+                    </div>
+                    <div class="card border-0 shadow-sm dashboard-card">
+                        <div class="card-body p-4 text-center">
+                            <h6 class="text-muted mb-2">ATS Score</h6>
+                            <div class="score-ring-wrapper" data-score="{{ analysis.score|default:0 }}">
+                                <svg viewBox="0 0 120 120" class="score-ring">
+                                    <circle class="score-ring-bg" cx="60" cy="60" r="50"></circle>
+                                    <circle class="score-ring-progress" cx="60" cy="60" r="50"></circle>
+                                </svg>
+                                <div class="score-ring-text">
+                                    <span class="score-value">{{ analysis.score|default:0 }}%</span>
+                                </div>
+                            </div>
+                            {% if analysis.score_change %}
+                            <div class="small mt-2 {% if analysis.score_change > 0 %}text-success{% else %}text-warning{% endif %}">
+                                <i class="fas {% if analysis.score_change > 0 %}fa-arrow-trend-up{% else %}fa-arrow-trend-down{% endif %} me-1"></i>
+                                {{ analysis.score_change }}% vs previous version
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-8">
+                    <ul class="nav nav-pills mb-3 analyzer-subtabs" id="analyzerSubtabs">
+                        <li class="nav-item"><button class="nav-link active" data-bs-toggle="pill" data-bs-target="#overview-pane" type="button">Overview</button></li>
+                        <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#skills-pane" type="button">Skills Analysis</button></li>
+                        <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#feedback-pane" type="button">Resume Feedback</button></li>
+                        <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#history-pane" type="button">History</button></li>
+                    </ul>
+
+                    <div class="tab-content">
+                        <div class="tab-pane fade show active" id="overview-pane">
+                            <div class="card border-0 shadow-sm dashboard-card">
+                                <div class="card-body p-4">
+                                    <h5 class="card-title mb-3"><i class="fas fa-gauge-high me-2"></i>Overview</h5>
+                                    {% if analysis %}
+                                    <div class="row g-3">
+                                        <div class="col-md-4"><div class="metric-card"><span>Detected skills</span><strong>{{ analysis.found_skills|length }}</strong></div></div>
+                                        <div class="col-md-4"><div class="metric-card"><span>Missing skills</span><strong>{{ analysis.missing_skills|length }}</strong></div></div>
+                                        <div class="col-md-4"><div class="metric-card"><span>Top keywords</span><strong>{{ analysis.keywords|length }}</strong></div></div>
+                                    </div>
+                                    <div class="mt-4">
+                                        <h6 class="mb-2">Role match</h6>
+                                        <div class="d-flex justify-content-between small text-muted mb-1">
+                                            <span>{{ analysis.role_analysis.role|default:"general"|title }}</span>
+                                            <span>{{ analysis.role_analysis.match_percent|default:0 }}%</span>
+                                        </div>
+                                        <div class="progress">
+                                            <div class="progress-bar bg-info" style="width: {{ analysis.role_analysis.match_percent|default:0 }}%"></div>
+                                        </div>
+                                    </div>
+                                    {% else %}
+                                    <p class="text-muted mb-0">Upload a resume to see overview metrics.</p>
+                                    {% endif %}
+                                </div>
                             </div>
                         </div>
-                    {% endif %}
+
+                        <div class="tab-pane fade" id="skills-pane">
+                            <div class="card border-0 shadow-sm dashboard-card">
+                                <div class="card-body p-4">
+                                    <h5 class="card-title mb-3"><i class="fas fa-chart-pie me-2"></i>Skill Distribution</h5>
+                                    {% if analysis %}
+                                    <div id="skills-chart-empty" class="alert alert-light border text-muted mb-0 d-none" role="status">
+                                        <i class="fas fa-circle-info me-2"></i>No skills detected for distribution. Try a resume with clearer skill keywords.
+                                    </div>
+                                    <div id="skills-chart-wrap" class="row g-4 align-items-center">
+                                        <div class="col-lg-6 position-relative" style="min-height: 260px;">
+                                            <canvas id="skillsPieChart" height="250" aria-label="Skill distribution chart"></canvas>
+                                        </div>
+                                        <div class="col-lg-6">
+                                            <p class="small text-muted mb-2">Skills detected by category</p>
+                                            <div id="skills-category-list"></div>
+                                        </div>
+                                    </div>
+                                    {% else %}
+                                    <p class="text-muted mb-0">Upload a resume to generate skill category insights.</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" id="feedback-pane">
+                            <div class="card border-0 shadow-sm dashboard-card">
+                                <div class="card-body p-4">
+                                    <h5 class="card-title mb-3"><i class="fas fa-comments me-2"></i>Resume Insights & Feedback</h5>
+                                    {% if analysis %}
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <h6 class="small text-uppercase text-muted">ATS issues</h6>
+                                            <ul class="list-group list-group-flush">
+                                                {% for issue in analysis.ats_issues %}
+                                                <li class="list-group-item px-0 border-0"><i class="fas fa-triangle-exclamation text-warning me-2"></i>{{ issue }}</li>
+                                                {% empty %}
+                                                <li class="list-group-item px-0 border-0 text-success"><i class="fas fa-circle-check me-2"></i>No major ATS issues detected.</li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h6 class="small text-uppercase text-muted">Suggestions</h6>
+                                            <ul class="list-group list-group-flush">
+                                                {% for tip in analysis.suggestions_list %}
+                                                <li class="list-group-item px-0 border-0"><i class="fas fa-arrow-right text-primary me-2"></i>{{ tip }}</li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <hr>
+                                    <h6 class="small text-uppercase text-muted">Missing keywords for role</h6>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        {% for kw in analysis.role_analysis.missing %}
+                                        <span class="badge scg-missing-badge">{{ kw }}</span>
+                                        {% empty %}
+                                        <span class="text-muted small">No role selected or no missing keywords found.</span>
+                                        {% endfor %}
+                                    </div>
+                                    {% else %}
+                                    <p class="text-muted mb-0">Upload a resume to view keyword gap analysis and recommendations.</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" id="history-pane">
+                            <div class="card border-0 shadow-sm dashboard-card">
+                                <div class="card-body p-4">
+                                    <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
+                                        <h5 class="card-title mb-0"><i class="fas fa-clock-rotate-left me-2"></i>Interactive History</h5>
+                                        <div class="d-flex gap-2 flex-wrap">
+                                            <input class="form-control form-control-sm" id="history-search" placeholder="Filter by file name">
+                                            <select class="form-select form-select-sm" id="history-sort">
+                                                <option value="latest">Latest</option>
+                                                <option value="highest">Highest score</option>
+                                                <option value="name">File name A-Z</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div id="history-list" class="history-list"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
-<script>
-(function() {
-    var tab = "{{ tab|default:'' }}";
-    if (tab === 'analyzer') {
-        var el = document.getElementById('analyzer-tab');
-        if (el) { var b = new bootstrap.Tab(el); b.show(); }
-    }
-})();
-</script>
+
+{{ analysis|default:"{}"|json_script:"analysis-json" }}
+{{ resume_history|default:"[]"|json_script:"resume-history-json" }}
+{% endblock %}
+{% block before_app_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="{% static 'js/utils/skillCategorizer.js' %}"></script>
 {% endblock %}

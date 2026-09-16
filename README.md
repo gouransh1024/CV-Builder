@@ -1,15 +1,16 @@
-# Smart Career Guidance
+# Smart Career Guidance & CV Builder
 
-A Django web application for AI-powered career guidance, resume analysis, and personalized job-fit suggestions.
+An advanced, AI-powered web application for career path prediction, interactive ATS-ready CV/Resume building with modern industry templates, resume analysis, and tech career exploration.
 
-## Features
+## Key Features
 
-- **Career Guidance** – Enter skills and interests to get personalized career suggestions.
-- **Resume Analyzer** – Upload a PDF or TXT resume for keyword extraction, skill detection, and improvement tips.
-- **Explore Careers** – Browse skill-to-career mappings (public page).
-- **Dashboard** – Tabs for Career Guidance and Resume Analyzer, with recent history.
-- **User accounts** – Sign up, login, logout; guidance and uploads are stored per user.
-- **Modern UI** – Bootstrap 5, responsive layout, and custom styling.
+- **Interactive CV / Resume Builder** – Build professional resumes from scratch with real-time preview, live ATS keyword scoring, instant PDF generation, and auto-saving drafts.
+- **4 Trending Industry Templates** – Switch seamlessly between Modern Tech, Executive Leader, Tech Minimalist, and Creative Designer layouts.
+- **AI Career Path Prediction** – Machine learning model (scikit-learn) recommending roles based on academic interests, skills, and work preferences.
+- **ATS Resume Analyzer** – Multi-format parser (PDF, TXT, DOCX, Images) with skill gap analysis, ATS score, and tailored advice.
+- **Explore 37+ Tech Careers** – Interactive career guide with skill tags, salary insights, growth outlook, and step-by-step roadmaps.
+- **Automatic Theme Detection** – Synchronously detects browser/system dark or light theme (zero flash of unstyled content) with synchronized manual toggle.
+- **Protected User Workflow** – Seamless login gating with automatic post-authentication redirects to chosen tools.
 
 ## Quick start (Windows)
 
