@@ -12,8 +12,12 @@ SECRET_KEY = os.environ.get(
 
 DEBUG = os.environ.get('DEBUG', 'True').lower() in ('true', '1', 'yes')
 
-# Allowed Hosts: safe defaults with local IP discovery for development
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'testserver']
+# Allowed Hosts: safe defaults with Render & local IP discovery
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'testserver', '.onrender.com']
+RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+if RENDER_EXTERNAL_HOSTNAME:
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+
 if DEBUG:
     try:
         hostname = socket.gethostname()
@@ -23,8 +27,11 @@ if DEBUG:
     except Exception:
         pass
 
-# CSRF settings for local development and mobile network testing
-_csrf_origins = ['http://127.0.0.1:8000', 'http://localhost:8000']
+# CSRF settings for local development and Render production
+_csrf_origins = ['http://127.0.0.1:8000', 'http://localhost:8000', 'https://*.onrender.com']
+if RENDER_EXTERNAL_HOSTNAME:
+    _csrf_origins.append(f'https://{RENDER_EXTERNAL_HOSTNAME}')
+
 if DEBUG:
     try:
         hostname = socket.gethostname()
@@ -53,6 +60,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'smart_career_guidance.middleware.DynamicCSRFMiddleware',
@@ -101,7 +109,9 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [str(BASE_DIR / 'career_app' / 'static')]
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = str(BASE_DIR / 'media')
