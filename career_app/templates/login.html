@@ -34,7 +34,7 @@
                                 <label class="form-label small fw-semibold">Username</label>
                                 <div class="input-group">
                                     <span class="input-group-text bg-transparent border-end-0 text-muted"><i class="fas fa-user"></i></span>
-                                    <input type="text" name="username" class="form-control border-start-0 ps-0" placeholder="Enter your username" required autofocus>
+                                    <input type="text" name="username" id="login-username" class="form-control border-start-0 ps-0" placeholder="Enter your username" required autofocus>
                                 </div>
                             </div>
                             <div class="mb-4">
@@ -43,7 +43,7 @@
                                 </div>
                                 <div class="input-group">
                                     <span class="input-group-text bg-transparent border-end-0 text-muted"><i class="fas fa-lock"></i></span>
-                                    <input type="password" name="password" class="form-control border-start-0 ps-0" placeholder="••••••••" required>
+                                    <input type="password" name="password" id="login-password" class="form-control border-start-0 ps-0" placeholder="••••••••" required>
                                 </div>
                             </div>
                             <button type="submit" class="btn btn-primary btn-lg w-100 rounded-pill shadow-sm">
@@ -54,10 +54,73 @@
                         <div class="text-center mt-4 pt-2 border-top">
                             <p class="small text-muted mb-0">Don't have an account yet? <a href="{% url 'signup' %}{% if next %}?next={{ next|urlencode }}{% endif %}" class="fw-bold text-primary">Create an account</a></p>
                         </div>
+
+                        <!-- Demo / Quick-Login Credentials -->
+                        <div class="mt-4 p-3 rounded-3" style="background-color: var(--scg-badge-bg, #f8fafc); border: 1px dashed var(--scg-border, #cbd5e1);">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <span class="fw-semibold text-uppercase" style="letter-spacing: 0.5px; font-size: 0.72rem; color: var(--scg-muted, #64748b);">
+                                    <i class="fas fa-key me-1 text-warning"></i>Quick Login Credentials
+                                </span>
+                                <span class="badge rounded-pill bg-primary bg-opacity-10 text-primary small" style="font-size: 0.68rem;">Click to Auto-fill</span>
+                            </div>
+
+                            <div class="row g-2">
+                                <!-- Admin Account -->
+                                <div class="col-6">
+                                    <div class="p-2 rounded-2 border h-100 credential-card" onclick="fillCredentials('Admin', 'Admin1234')" onkeydown="if(event.key==='Enter'||event.key===' '){fillCredentials('Admin','Admin1234');event.preventDefault();}" role="button" tabindex="0" title="Click to auto-fill Admin credentials" style="background: var(--scg-card-bg, #ffffff); border-color: var(--scg-border, #e2e8f0) !important; cursor: pointer; transition: all 0.2s ease;">
+                                        <div class="d-flex align-items-center justify-content-between mb-1">
+                                            <span class="badge bg-danger bg-opacity-10 text-danger fw-bold" style="font-size: 0.7rem;">Admin</span>
+                                            <i class="fas fa-mouse-pointer text-muted" style="font-size: 0.65rem;"></i>
+                                        </div>
+                                        <div class="small lh-sm">
+                                            <div class="text-muted" style="font-size: 0.72rem;">User: <strong class="text-body user-select-all">Admin</strong></div>
+                                            <div class="text-muted" style="font-size: 0.72rem;">Pass: <strong class="text-body user-select-all">Admin1234</strong></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- User Account -->
+                                <div class="col-6">
+                                    <div class="p-2 rounded-2 border h-100 credential-card" onclick="fillCredentials('User', 'User1234')" onkeydown="if(event.key==='Enter'||event.key===' '){fillCredentials('User','User1234');event.preventDefault();}" role="button" tabindex="0" title="Click to auto-fill User credentials" style="background: var(--scg-card-bg, #ffffff); border-color: var(--scg-border, #e2e8f0) !important; cursor: pointer; transition: all 0.2s ease;">
+                                        <div class="d-flex align-items-center justify-content-between mb-1">
+                                            <span class="badge bg-success bg-opacity-10 text-success fw-bold" style="font-size: 0.7rem;">User</span>
+                                            <i class="fas fa-mouse-pointer text-muted" style="font-size: 0.65rem;"></i>
+                                        </div>
+                                        <div class="small lh-sm">
+                                            <div class="text-muted" style="font-size: 0.72rem;">User: <strong class="text-body user-select-all">User</strong></div>
+                                            <div class="text-muted" style="font-size: 0.72rem;">Pass: <strong class="text-body user-select-all">User1234</strong></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function fillCredentials(username, password) {
+    var userInput = document.getElementById('login-username') || document.querySelector('input[name="username"]');
+    var passInput = document.getElementById('login-password') || document.querySelector('input[name="password"]');
+    if (userInput && passInput) {
+        userInput.value = username;
+        passInput.value = password;
+        userInput.dispatchEvent(new Event('input', { bubbles: true }));
+        passInput.dispatchEvent(new Event('input', { bubbles: true }));
+        passInput.focus();
+    }
+}
+</script>
+<style>
+.credential-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.15);
+    border-color: var(--scg-primary, #4f46e5) !important;
+}
+</style>
 {% endblock %}
