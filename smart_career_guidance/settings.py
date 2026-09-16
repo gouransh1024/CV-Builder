@@ -12,16 +12,8 @@ SECRET_KEY = os.environ.get(
 
 DEBUG = os.environ.get('DEBUG', 'True').lower() in ('true', '1', 'yes')
 
-# Allowed Hosts: safe defaults with PythonAnywhere, Vercel, Render & local IP discovery
-ALLOWED_HOSTS = ['*', '127.0.0.1', 'localhost', 'testserver', '.onrender.com', '.vercel.app', '.pythonanywhere.com']
-RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
-if RENDER_EXTERNAL_HOSTNAME:
-    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
-
-VERCEL_URL = os.environ.get('VERCEL_URL')
-if VERCEL_URL:
-    ALLOWED_HOSTS.append(VERCEL_URL)
-
+# Allowed Hosts: local development, network devices, and production hosts
+ALLOWED_HOSTS = ['*', '127.0.0.1', 'localhost', 'testserver']
 if DEBUG:
     try:
         hostname = socket.gethostname()
@@ -31,19 +23,11 @@ if DEBUG:
     except Exception:
         pass
 
-# CSRF settings for local development, PythonAnywhere, Render and Vercel
+# CSRF settings for local development and mobile network testing
 _csrf_origins = [
     'http://127.0.0.1:8000',
     'http://localhost:8000',
-    'https://*.onrender.com',
-    'https://*.vercel.app',
-    'https://*.pythonanywhere.com'
 ]
-if RENDER_EXTERNAL_HOSTNAME:
-    _csrf_origins.append(f'https://{RENDER_EXTERNAL_HOSTNAME}')
-if VERCEL_URL:
-    _csrf_origins.append(f'https://{VERCEL_URL}')
-
 if DEBUG:
     try:
         hostname = socket.gethostname()
@@ -103,16 +87,10 @@ TEMPLATES = [
     },
 ]
 
-# Database configuration: support writable /tmp on Vercel serverless
-if os.environ.get('VERCEL'):
-    _db_path = '/tmp/db.sqlite3'
-else:
-    _db_path = str(BASE_DIR / 'db.sqlite3')
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': _db_path,
+        'NAME': str(BASE_DIR / 'db.sqlite3'),
     }
 }
 
