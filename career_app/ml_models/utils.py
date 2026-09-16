@@ -1,6 +1,6 @@
 import re
 from pathlib import Path
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Union
 import joblib
 
 try:
@@ -90,12 +90,16 @@ def _get_model() -> Any:
     return None
 
 
-def get_career_suggestions(skills_text: Optional[str] = None) -> List[str]:
+def get_career_suggestions(skills_text: Union[str, List[str], None] = None) -> List[str]:
     """
     Return a list of career suggestions based on skills/interests text.
     Combines authentic ML model classification with safe keyword heuristics.
     """
-    clean_text = (skills_text or '').strip()
+    if isinstance(skills_text, (list, tuple, set)):
+        clean_text = ' '.join(str(s) for s in skills_text).strip()
+    else:
+        clean_text = (skills_text or '').strip()
+
     if not clean_text:
         return ['General Professional', 'Career Coach recommended']
 

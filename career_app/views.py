@@ -1,6 +1,7 @@
 import json
 import os
 from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -283,7 +284,7 @@ def career_guidance(request):
                 _dashboard_context(request.user, tab='guidance', suggestions=suggestions, skills_submitted=skills),
             )
         return render(request, 'dashboard.html', _dashboard_context(request.user, tab='guidance', guidance_form=form))
-    return redirect('dashboard' + '?tab=guidance')
+    return redirect(f"{reverse('dashboard')}?tab=guidance")
 
 
 @login_required
@@ -360,7 +361,7 @@ def resume_analyzer(request):
             return render(request, 'dashboard.html', _dashboard_context(request.user, tab='analyzer', analysis=analysis, analyzer_form=ResumeUploadForm()))
         messages.error(request, 'Upload validation error. Please upload a valid PDF, TXT, DOCX, or image (max 5MB).')
         return render(request, 'dashboard.html', _dashboard_context(request.user, tab='analyzer', analyzer_form=form))
-    return redirect('dashboard' + '?tab=analyzer')
+    return redirect(f"{reverse('dashboard')}?tab=analyzer")
 
 
 @login_required
