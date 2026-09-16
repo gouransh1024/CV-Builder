@@ -2,14 +2,18 @@
   "version": 2,
   "builds": [
     {
-      "src": "smart_career_guidance/wsgi.py",
+      "src": "wsgi.py",
       "use": "@vercel/python"
     }
   ],
   "routes": [
     {
+      "src": "/static/(.*)",
+      "dest": "/static/$1"
+    },
+    {
       "src": "/(.*)",
-      "dest": "smart_career_guidance/wsgi.py"
+      "dest": "wsgi.py"
     }
   ]
 }
